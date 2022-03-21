@@ -207,10 +207,14 @@ public class QueryMongoMapReduce
     	// See: https://mongodb.github.io/mongo-java-driver/4.4/apidocs/mongodb-driver-legacy/com/mongodb/DBCollection.html#mapReduce(java.lang.String,java.lang.String,java.lang.String,com.mongodb.DBObject)
     	    	
 		MongoCollection<Document> col = db.getCollection(COLLECTION_NAME);
+
+		String mapfn = "function() {"
+					+"emit(this.state, 1);}";
+		String reducefn = "function(key, items) {"
+							+"return Array.sum(items); }";
 		
-		// MapReduceIterable<Document> output = col.mapReduce(mapfn, reducefn);
-		// return output.iterator();
-		return null;
+		MapReduceIterable<Document> output = col.mapReduce(mapfn, reducefn);
+		return output.iterator();
     }
        
    
@@ -224,8 +228,16 @@ public class QueryMongoMapReduce
     	// Note: Output key must be called: "totalOfAllOrders".
     	
 		MongoCollection<Document> col = db.getCollection(COLLECTION_NAME);
-		
-		return null;
+
+		String mapfn = "function() { var sum = 0;"
+				+"	 for (var i=0; i < this.orders.length; i++) "
+				+"		 sum += this.orders[i].total; "
+				+"	 emit(\"totalOfAllOrders\", sum); }";
+		String reducefn = "function(key, items) {"
+							+"return Array.sum(items); }";
+
+		MapReduceIterable<Document> output = col.mapReduce(mapfn, reducefn);
+		return output.iterator();
     }
     
     /**
@@ -237,7 +249,15 @@ public class QueryMongoMapReduce
     	    	
 		MongoCollection<Document> col = db.getCollection(COLLECTION_NAME);
 		
-		return null;
+		String mapfn = "function() { var sum = 0;"
+				+"	 for (var i=0; i < this.orders.length; i++) "
+				+"		 sum += this.orders[i].total; "
+				+"	 emit(this.state, sum); }";
+		String reducefn = "function(key, items) {"
+							+"return Array.sum(items); }";
+
+		MapReduceIterable<Document> output = col.mapReduce(mapfn, reducefn);
+		return output.iterator();
     }
     
     /**
@@ -257,14 +277,24 @@ public class QueryMongoMapReduce
     /**
      * Performs a MongoDB MapReduce query that find the order with the maximum # of items. SELECT MAX(orders.item) 
      */
-    public MongoCursor<Document> query5()
+    public MongoCursor<Document> query5() 
     {
     	// TODO: Write a MongoDB MapReduce query that find the order with the maximum # of items. SELECT MAX(orders.item) 
     	// Note: Output key should be "max".
     	
 		MongoCollection<Document> col = db.getCollection(COLLECTION_NAME);
 		
-		return null;
+		String mapfn = "function() { var max = 0; var maxout = 0;"
+					+"	 for (var i=0; i < this.orders.length; i++) "
+					+"		 if(this.orders[i].items >= max)"
+					+"		 	max = this.orders[i].items; "
+					+"			maxout = emit(this.orders[i], i); "
+					+"	 emit(\"max\", maxout);}";
+		String reducefn = "function(key, items) {"
+							+"return Array.sum(items); }";
+		
+		MapReduceIterable<Document> output = col.mapReduce(mapfn, reducefn);
+		return output.iterator();
     }
     
     /**
